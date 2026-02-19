@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мертвые души - карта</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            position: relative;
+            height: 100vh;
+            width: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-wrapper {
+            position: relative;
+            height: 100vh;
+        }
+
+        #image-map {
+            height: 100vh;
+            width: auto;
+            display: block;
+        }
+
+        /* Контейнеры для кнопок */
+        .sector-buttons {
+            position: absolute;
+            display: flex;
+            gap: 5px;
+            z-index: 10;
+            transform: translateX(-50%);
+        }
+
+        /* Кнопки */
+        .action-btn {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 140px;
+            position: relative;
+        }
+
+        .city-btn {
+            padding: 35px 100px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 140px;
+            position: relative;
+        }
+
+        .city-btn:hover {
+
+        }
+
+        .action-btn:hover {
+
+        }
+
+        /* Всплывающая подсказка */
+        .tooltip {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 10000;
+            white-space: nowrap;
+            border: 1px solid gold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transform: translate(-50%, -100%);
+            margin-top: -10px;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid rgba(0, 0, 0, 0.9);
+        }
+
+        /* Попап */
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 450px;
+            width: 90%;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .popup.active {
+            display: block;
+        }
+
+        .popup h3 {
+            margin-bottom: 10px;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .popup h4 {
+            margin-bottom: 15px;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .popup .quote {
+            font-style: italic;
+            color: #888;
+            border-left: 3px solid #999;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+
+        .popup p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .popup ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        .popup li {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .popup button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .popup button:hover {
+            background: #555;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="image-wrapper">
+            <img src="/image.jpg" alt="Карта" id="image-map">
+            
+            <!-- Сектор 1 (верхний левый) -->
+            <div class="sector-buttons" style="left: 18%; bottom: 70%;">
+                <div class="city-btn" data-sector="1" style="bottom: 0%; z-index: 10;" data-index="0" data-fullname="Город NN"></div>
+                <div class="action-btn" data-sector="1"  style="position: absolute;z-index: 0; bottom: 0%; left: 81%; height: 190px;" data-index="1" data-fullname="Губернатор"></div>
+            </div>
+            
+            <!-- Сектор 2 (верхний правый) -->
+            <div class="sector-buttons" style="left: 69%; bottom: 67%;">
+                <div class="city-btn" style="z-index: 10;" data-sector="2" data-index="0" data-fullname="Деревня Маниловка"></div>
+                <div class="action-btn" style="position: absolute; bottom: 100%; left: 48%; z-index: 0; height: 190px;  width: 250px;" data-sector="2" data-index="1" data-fullname="Помещик Манилов"></div>
+            </div>
+            
+            <!-- Сектор 3 (средний левый) -->
+            <div class="sector-buttons" style="left: 17%; bottom: 39.5%;">
+                
+                <div class="action-btn" style="position: absolute; bottom: 10%; height: 210px; width: 180px;" data-sector="3" data-index="1" data-fullname="Помещица Коробочка"></div>
+                <div class="city-btn" style="left: 69%;" data-sector="3" data-index="0" data-fullname="Деревня Коробочки"></div>
+            </div>
+            
+            <!-- Сектор 4 (средний правый) -->
+            <div class="sector-buttons" style="left: 80%; bottom: 39.5%;">
+                <div class="city-btn" style="right: 35%;" data-sector="4" data-index="0" data-fullname="Придорожный трактир"></div>
+                <div class="action-btn" style="position: absolute; bottom: 110%; left: 0%; height: 180px; width: 260px;" data-sector="4" data-index="1" data-fullname="Помещик Ноздрев"></div>
+            </div>
+            
+            <!-- Сектор 5 (нижний левый) -->
+           
+            
+            <div class="sector-buttons" style="left: 75%; bottom: 8%;">
+                
+                
+                <div class="action-btn" style="position: absolute; bottom: 100%; left: 40%; height: 200px; width: 210px;" data-sector="5" data-index="1" data-fullname="Помещик Собакевич"></div>
+                <div class="city-btn" style="left: 40%;" data-sector="5" data-index="0" data-fullname="Деревня Собакевича"></div>
+            </div>
+
+             <div class="sector-buttons" style="left: 25%; bottom: 12%;">
+                
+                <div class="action-btn" style="position: absolute; bottom: 0%; right: 20%; height: 250px; width: 260px; z-index: 0;" data-sector="6" data-index="1" data-fullname="Помещик Плюшкин"></div>
+                <div class="city-btn" style="left: 62%; z-index: 10;" data-sector="6" data-index="0" data-fullname="Деревня Плюшкина"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Попап -->
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup">
+        <h3 id="popupTitle">Название</h3>
+        <h4 id="popupSubtitle"></h4>
+        <div class="quote" id="popupQuote"></div>
+        <p id="popupDescription"></p>
+        <div id="popupFeatures"></div>
+        <button onclick="closePopup()">Закрыть</button>
+    </div>
+
+    <script>
+        // Данные для кнопок
+        const sectorButtons = {
+            1: [
+                { 
+                    name: 'Город NN', 
+                    type: 'city', 
+                    text: 'Город NN в поэме Н.В. Гоголя «Мертвые души» — это вымышленный собирательный образ типичного провинциального губернского города 1830-х годов. Он символизирует застой, пошлость, чиновничье взяточничество и духовную пустоту. Город описывается как место с деревянными домами, грязными улицами и облезлыми вывесками, где жизнь вращается вокруг сплетен, балов и имитации деятельности. ', 
+                },
+                { 
+                    name: 'Губернатор', 
+                    type: 'character',  
+                    text: 'Губернатор - Управляющий в городе NN которыйустраивает баллы и приветствует новые знакомства. Больше о нем ничего не известно.', 
+                }
+            ],
+            2: [
+                { 
+                    name: 'Маниловка', 
+                    type: 'village', 
+                    text: 'Деревня Маниловка— воплощение бесхозяйственности и пустых мечтаний её владельца. Описание отличается отсутствием уюта: дом стоит на открытом всем ветрам юру, вокруг нет зелени, а сад выполнен в претенциозном «английском» стиле, но запущен. Крестьянские избы выглядят крепкими, но усадьба символизирует скуку и лень. ', 
+                },
+                { 
+                    name: 'Манилов', 
+                    type: 'character', 
+                    text: 'Манилов - владелец Маниловки, помещик, отставной офицер. Он характеризуется как мечтательный, бесхозяйственный и оторванный от реальности человек, проводящий время в бесплодных фантазиях. Манилов бесплатно отдал Чичикову мертвые души, демонстрируя свое «сердечное влечение» и равнодушие к материальным вопросам. ', 
+                }
+            ],
+            3: [
+                { 
+                    name: 'Коробочка', 
+                    type: 'village', 
+                    text: 'Деревня Коробочки — это небольшое, замкнутое и крепкое хозяйство, отражающее скупость и хозяйственность хозяйки. Она описывается как беспорядочно расположенная группа изб, окруженная огромными огородами, фруктовыми деревьями и дворами с живностью. В деревне царит деревенский уют, но при этом заметна ограниченность и застой. ', 
+                },
+                { 
+                    name: 'Настасья Петровна Коробочка ', 
+                    type: 'character', 
+                    text: 'Настасья Петровна Коробочка — владелица деревни коробочки. Известна своей мелочной скупостью, хозяйственностью, упрямством и суеверностью, за что получила прозвище «дубиноголовая». Именно она, опасаясь продешевить, раскрывает тайну Чичикова, обратившись в город.', 
+                }
+            ],
+            4: [
+                { 
+                    name: 'Трактир', 
+                    type: 'tavern', 
+                    text: 'Трактир — это «деревянный, потемневший» придорожный трактир, место отдыха Чичикова, символизирующее обыденность, бытовую неустроенность и встречу с помещиком-кутилой Ноздрёвым. Описан как заведение с аппетитным меню (поросенок с хреном), контрастирующее с аферой Чичикова', 
+                },
+                { 
+                    name: 'Ноздрев', 
+                    type: 'character', 
+                    text: 'Ноздрёв - 35-летний помещик, «исторический человек», кутила и азартный лжец. Это энергичный, шумный мужчина с румяными щеками и черными бакенбардами, живущий одним днем. Характеризуется бесцеремонностью, хвастливостью, склонностью к вранью, постоянной смене занятий и карточным жульничеством.     ',  
+                }
+            ],
+            5: [
+                { 
+                    name: 'Собакевич', 
+                    type: 'village', 
+                    text: 'Деревня Собакевича — это воплощение фундаментальности, прочности и избыточной мощи. Все постройки — от господского дома до последнего сарая — сделаны из самых толстых и тяжелых бревен, рассчитанных на века. Даже колодец в деревне выложен из крепкого дуба. Все постройки — от господского дома до последнего сарая — сделаны из самых толстых и тяжелых бревен, рассчитанных на века. Даже колодец в деревне выложен из крепкого дуба.', 
+                },
+                { 
+                    name: 'Михаил Семёнович Собакевич', 
+                    type: 'character', 
+                    text: 'Михаил Семёнович Собакевич — помещик, олицетворяющий «кулачество», грубую материальность и прямолинейность. Это крупный, неуклюжий мужчина, напоминающий медведя. Он практичный, расчетливый хозяин, заботящийся о крепости своего дома, но при этом скупой, хитрый, циничный и черствый человек, живущий ради физических удовольствий и наживы.', 
+                }
+            ],
+            6: [
+                { 
+                    name: 'Плюшкин', 
+                    type: 'village', 
+                    text: 'Деревня Плюшкина – последняя деревня в романе, отражает духовное запустение самого персонажа. Старые обветшалые избы, заброшенные дома с прорехами в крышах, окна закупорены тряпьем, две церкви, такие же унылые и мрачные, как и общее впечатление от вида деревни. Кругом царит разруха и пустота. Все дома были старые и покосившиеся, люди жили в ужасной нищете. ', 
+                },
+                { 
+                    name: 'Степан Плюшкин', 
+                    type: 'character', 
+                    text: 'Степан Плюшкин — помещик-скряга, ставший символом предельного духовного и хозяйственного упадка («прореха на человечестве»). Он живет в нищете, одет в лохмотья, подозрителен, хотя владеет тысячами душ. Его дом и деревня ветхи, а страсть к накоплению мусора сочетается с голодом крестьян.', 
+                }
+            ]
+        };
+
+        // Переменная для хранения подсказки
+        let tooltip = null;
+
+        // Показать подсказку
+        function showTooltip(element, text) {
+            if (tooltip) {
+                tooltip.remove();
+            }
+            
+            tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.textContent = text;
+            
+            const rect = element.getBoundingClientRect();
+            
+            tooltip.style.left = rect.left + rect.width / 2 + 'px';
+            tooltip.style.top = rect.top + 'px';
+            
+            document.body.appendChild(tooltip);
+        }
+
+        // Скрыть подсказку
+        function hideTooltip() {
+            if (tooltip) {
+                tooltip.remove();
+                tooltip = null;
+            }
+        }
+
+        // Показать попап
+        function showPopup(sector, index) {
+            const data = sectorButtons[sector][index];
+            
+            document.getElementById('popupTitle').textContent = data.name;
+            document.getElementById('popupSubtitle').textContent = data.desc;
+            document.getElementById('popupQuote').textContent = data.quote;
+            document.getElementById('popupDescription').textContent = data.text;
+            
+            document.getElementById('popup').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+            
+            // Скрываем подсказку если она есть
+            hideTooltip();
+        }
+
+        // Закрыть попап
+        function closePopup() {
+            document.getElementById('popup').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        // Назначаем обработчики на кнопки
+        document.addEventListener('DOMContentLoaded', function() {
+const buttons = document.querySelectorAll('.action-btn, .city-btn');            
+            buttons.forEach(button => {
+                // Показ подсказки при наведении
+                button.addEventListener('mouseenter', function(e) {
+                    const fullname = this.getAttribute('data-fullname');
+                    showTooltip(this, fullname);
+                });
+                
+                button.addEventListener('mouseleave', hideTooltip);
+                
+                // Клик для открытия попапа
+                button.addEventListener('click', function() {
+                    const sector = this.getAttribute('data-sector');
+                    const index = this.getAttribute('data-index');
+                    showPopup(sector, index);
+                });
+            });
+        });
+        
+        // Закрытие по Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePopup();
+                hideTooltip();
+            }
+        });
+        
+        // Закрытие по клику на оверлей
+        document.getElementById('overlay').addEventListener('click', closePopup);
+    </script>
+</body>
+</html>
